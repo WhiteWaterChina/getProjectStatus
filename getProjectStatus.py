@@ -21,8 +21,9 @@ num_year = "2019"
 ver = "0.5"
 address_web = "172.31.2.106:8082"
 
-def get_next(get_data, id, headers_sub, url_sub):
-    payload_next_sub = "id={}".format(id)
+
+def get_next(get_data, id_sub, headers_sub, url_sub):
+    payload_next_sub = "id={}".format(id_sub)
     get_page = get_data.post(url_sub, headers=headers_sub, data=payload_next_sub)
     data_page = json.loads(get_page.text)
     # print("Get detail info for id:%s with return code %s" % (id, get_page.status_code))
@@ -42,6 +43,7 @@ def get_next(get_data, id, headers_sub, url_sub):
             data_return_dict["{}".format(id_data)]["name"] = text_data
             data_return_dict["{}".format(id_data)]["casenumber"] = casenumber_data
             data_return_dict["{}".format(id_data)]["data"] = {}
+            data_return_dict["{}".format(id_data)]["parentid"] = id_sub
 
     return data_return_dict
 
@@ -56,6 +58,59 @@ def add_item_to_dict(value_return, parent_id, dict_sub):
             if isinstance(value_dict["data"], dict):
                 add_item_to_dict(value_return, parent_id, value_dict["data"])
     return dict_value_sub
+
+
+def add_level():
+    pass
+
+def get_detail(get_data, id_testcase_all, flag_status_list):
+    print(id_testcase_all)
+    get_data_sub = get_data
+    url_testcase = "http://{}/iauto_acp/itmsTestCaseN.do/projectConfigTestCaseInfo.view".format(address_web)
+    headers_detail = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Connection': 'keep-alive',
+        'Content-Length': '4',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Host': '{}'.format(address_web),
+        'Origin': 'http://{}'.format(address_web),
+        'Referer': 'http://{}/iauto_acp/itmsTestCase.do/testAdmin.view'.format(address_web),
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36',
+        'Upgrade-Insecure-Requests': "1",
+    }
+    project_id = id_testcase_all.split(":")[1]
+    id_testcase = id_testcase_all.split(":")[2]
+    querystring_detail = {"projectId": "{}".format(project_id), "configTestCaseId": "{}".format(id_testcase)}
+    page_testcase_temp = get_data_sub.get(url_testcase, headers=headers_detail, params=querystring_detail)
+    page_testcase = BeautifulSoup(page_testcase_temp.text, "html.parser")
+    # bug ID
+    bug_id = page_testcase.find("td", text="Bug Id:").parent.find("a").get_text()
+    # BUG内容
+    bug_content = page_testcase.find("td", text="Bug Content:").parent.find("a").get_text()
+    # 备注
+    content_bak = page_testcase.find("td", text="备注(content):".decode('gbk')).parent.find("a").get_text()
+    produce_temp = re.search(r'var procedureList = (\[\{.*?\}\]);', page_testcase_temp.text).groups()[0]
+    produce = json.loads(produce_temp)
+    step_list = []
+    expect_list = []
+    status_list = []
+    content_list = []
+    if len(produce) != 0:
+        for item_step in produce:
+            status_step = item_step["result"]
+            if status_step in flag_status_list:
+                status_list.append(status_step)
+                step_list.append(item_step["testProcedure"])
+                expect_list.append(item_step["testExpect"])
+                content_list.append(item_step["remark"])
+    # print(page_testcase)
+    # print("zanting")
+    get_data_sub.close()
+    return id_testcase_all, bug_id, bug_content, content_bak, status_list, step_list, expect_list, content_list
+
+
 class GetProjectStatus(wx.Frame):
     def __init__(self, parent):
 
@@ -408,6 +463,7 @@ class GetProjectStatus(wx.Frame):
         password = self.input_password.GetValue()
         project_selected = self.listbox_projectname.GetStringSelection()
         phase_selected = self.listbox_phase.GetStringSelection()
+        flag_status_list = ["NP", "FAIL", "BLOCK"]
 
         # 登录
         url_login = "http://{}/iauto_acp/login".format(address_web)
@@ -464,7 +520,7 @@ class GetProjectStatus(wx.Frame):
         # 获取阶段下所有CFG的名称和ID
         payload_config = "id={}".format(id_phase)
         content_config_temp = get_data.post(url_projecttree, data=payload_config,
-                                                   headers=headers_projecttree).text
+                                            headers=headers_projecttree).text
         content_config = json.loads(content_config_temp)
         data_dict = {}
         if len(content_config) == 0:
@@ -480,15 +536,19 @@ class GetProjectStatus(wx.Frame):
             for item_config_1 in content_config:
                 id_config = item_config_1["id"]
                 name_config = item_config_1["text"]
-                data_dict["{}".format(id_config)] = {} # 每个CFG一个dict，后面每个dict写一个sheet页
-                data_dict["{}".format(id_config)]["id"] = id_config # dict中保存CFG的id
-                data_dict["{}".format(id_config)]["name"] = name_config # dict中保存CFG的名称
-                data_dict["{}".format(id_config)]["data"] = {} # dict中data保存往下层级的信息
+                data_dict["{}".format(id_config)] = {}  # 每个CFG一个dict，后面每个dict写一个sheet页
+                data_dict["{}".format(id_config)]["id"] = id_config  # dict中保存CFG的id
+                data_dict["{}".format(id_config)]["name"] = name_config  # dict中保存CFG的名称
+                data_dict["{}".format(id_config)]["data"] = {}  # dict中data保存往下层级的信息
 
             for item_config, value_config in data_dict.items():
+                data_detail_dict = {}
                 parent_id_1 = item_config
                 ids_testcase_list = []  # 保存每个配置下最后需要逐个获取详细case信息的列表
                 data_return_1 = get_next(get_data, item_config, headers_projecttree, url_projecttree)
+                #     return data_return_dict
+                self.updatedisplay("开始获取配置下的层级关系-{}!".decode('gbk').format(value_config["name"]))
+                self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                 if data_return_1 is None:
                     pass
                 else:
@@ -496,13 +556,16 @@ class GetProjectStatus(wx.Frame):
                     for item_return_1, value_return_1 in data_return_1.items():
                         id_return_1 = value_return_1["id"]
                         testcase_number_1 = value_return_1["casenumber"]
-                        data_dict_return_1 = add_item_to_dict(value_return_1, parent_id_1, data_dict)
-                        data_dict = data_dict_return_1
-                        # print("1")
                         if testcase_number_1 != "None":
                             ids_testcase_list.append(id_return_1)
+                            data_detail_dict["{}".format(id_return_1)] = value_return_1
                         else:
                             ids_next_run_1.append(id_return_1)
+                            data_dict_return_1 = add_item_to_dict(value_return_1, parent_id_1, data_dict)
+                            data_dict = data_dict_return_1
+                            print(id_return_1)
+                    print("1")
+
                     if len(ids_next_run_1) != 0:
                         ids_next_run_2 = []
                         for item_run_1 in ids_next_run_1:
@@ -514,13 +577,16 @@ class GetProjectStatus(wx.Frame):
                                 for item_return_2, value_return_2 in data_return_2.items():
                                     id_return_2 = value_return_2["id"]
                                     testcase_number_2 = value_return_2["casenumber"]
-                                    data_dict_return_2 = add_item_to_dict(value_return_2, parent_id_2, data_dict)
-                                    data_dict = data_dict_return_2
-                                    # print("2")
                                     if testcase_number_2 != "None":
                                         ids_testcase_list.append(id_return_2)
+                                        data_detail_dict["{}".format(id_return_2)] = value_return_2
                                     else:
                                         ids_next_run_2.append(id_return_2)
+                                        data_dict_return_2 = add_item_to_dict(value_return_2, parent_id_2, data_dict)
+                                        data_dict = data_dict_return_2
+                                        print(id_return_2)
+                                print("2")
+
                                 if len(ids_next_run_2) != 0:
                                     ids_next_run_3 = []
                                     for item_run_2 in ids_next_run_2:
@@ -533,14 +599,17 @@ class GetProjectStatus(wx.Frame):
                                             for item_return_3, value_return_3 in data_return_3.items():
                                                 id_return_3 = value_return_3["id"]
                                                 testcase_number_3 = value_return_3["casenumber"]
-                                                data_dict_return_3 = add_item_to_dict(value_return_3, parent_id_3,
-                                                                                      data_dict)
-                                                data_dict = data_dict_return_3
-                                                # print("3")
                                                 if testcase_number_3 != "None":
                                                     ids_testcase_list.append(id_return_3)
+                                                    data_detail_dict["{}".format(id_return_3)] = value_return_3
                                                 else:
                                                     ids_next_run_3.append(id_return_3)
+                                                    data_dict_return_3 = add_item_to_dict(value_return_3, parent_id_3,
+                                                                                          data_dict)
+                                                    data_dict = data_dict_return_3
+                                                    print(id_return_3)
+                                            print("3")
+
                                             if len(ids_next_run_3) != 0:
                                                 ids_next_run_4 = []
                                                 for item_run_3 in ids_next_run_3:
@@ -553,30 +622,82 @@ class GetProjectStatus(wx.Frame):
                                                         for item_return_4, value_return_4 in data_return_4.items():
                                                             id_return_4 = value_return_4["id"]
                                                             testcase_number_4 = value_return_4["casenumber"]
-                                                            data_dict_return_4 = add_item_to_dict(value_return_4,
-                                                                                                  parent_id_4,
-                                                                                                  data_dict)
-                                                            data_dict = data_dict_return_4
-                                                            print("4")
                                                             if testcase_number_4 != "None":
                                                                 ids_testcase_list.append(id_return_4)
+                                                                data_detail_dict[
+                                                                    "{}".format(id_return_4)] = value_return_4
                                                             else:
-                                                                ids_next_run_3.append(id_return_4)
-                url_testcase = "http://{}/iauto_acp/itmsTestCaseN.do/projectConfigTestCaseInfo.view".format(address_web)
+                                                                ids_next_run_4.append(id_return_4)
+                                                                data_dict_return_4 = add_item_to_dict(value_return_4,
+                                                                                                      parent_id_4,
+                                                                                                      data_dict)
+                                                                data_dict = data_dict_return_4
+                                                                print(id_return_4)
+                                                        print("3")
+
+                                                        if len(ids_next_run_4) != 0:
+                                                            ids_next_run_5 = []
+                                                            for item_run_4 in ids_next_run_4:
+                                                                parent_id_5 = item_run_4
+                                                                data_return_5 = get_next(get_data, item_run_4, headers_projecttree,
+                                                                                         url_projecttree)
+                                                                if data_return_5 is None:
+                                                                    pass
+                                                                else:
+                                                                    for item_return_5, value_return_5 in data_return_5.items():
+                                                                        id_return_5 = value_return_5["id"]
+                                                                        testcase_number_5 = value_return_5["casenumber"]
+                                                                        if testcase_number_5 != "None":
+                                                                            ids_testcase_list.append(id_return_5)
+                                                                            data_detail_dict[
+                                                                                "{}".format(id_return_5)] = value_return_5
+                                                                        else:
+                                                                            ids_next_run_5.append(id_return_5)
+                                                                            data_dict_return_5 = add_item_to_dict(value_return_5,
+                                                                                                                  parent_id_5,
+                                                                                                                  data_dict)
+                                                                            data_dict = data_dict_return_5
+                                                                            print(id_return_5)
+
+                self.updatedisplay("完成获取配置下的层级关系-{}!".decode('gbk').format(value_config["name"]))
+                self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+                # 获取每个用例的详细信息
+                self.updatedisplay("开始获取每个用例的详细信息-{}!".decode('gbk').format(value_config["name"]))
+                self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+                temp_detail = []
+                pool_detail = Pool(multiprocessing.cpu_count())
                 for id_testcase_all in ids_testcase_list:
-                    project_id = id_testcase_all.split(":")[1]
-                    id_testcase = id_testcase_all.split(":")[2]
-                    payload_testcase = "projectId={}&configTestCaseId={}".format(project_id, id_testcase)
-                    page_testcase_temp = get_data.get(url_testcase, headers=headers_projecttree, params=payload_testcase).text
-                    page_testcase = BeautifulSoup(page_testcase_temp, "html.parser")
-                    print(page_testcase)
-                    print("zanting")
+                    temp_detail.append(
+                        pool_detail.apply_async(get_detail, args=(get_data, id_testcase_all, flag_status_list)))
+                pool_detail.close()
+                pool_detail.join()
+                # return id_testcase_all, bug_id, bug_content, content_bak, status_list, step_list, expect_list, content_list
+                for item_return_detail in temp_detail:
+                    data_detail_temp = item_return_detail.get()
+                    id_testcase = data_detail_temp[0]
+                    bug_id = data_detail_temp[1]
+                    bug_content = data_detail_temp[2]
+                    content_bak = data_detail_temp[3]
+                    status_case_list = data_detail_temp[4]
+                    step_case_list = data_detail_temp[5]
+                    expect_case_list = data_detail_temp[6]
+                    content_case_list = data_detail_temp[7]
+
+                    data_detail_dict["{}".format(id_testcase)]["data"]["bug_id"] = bug_id
+                    data_detail_dict["{}".format(id_testcase)]["data"]["bug_content"] = bug_content
+                    data_detail_dict["{}".format(id_testcase)]["data"]["content_bak"] = content_bak
+                    data_detail_dict["{}".format(id_testcase)]["data"]["status_case_list"] = status_case_list
+                    data_detail_dict["{}".format(id_testcase)]["data"]["step_case_list"] = step_case_list
+                    data_detail_dict["{}".format(id_testcase)]["data"]["expect_case_list"] = expect_case_list
+                    data_detail_dict["{}".format(id_testcase)]["data"]["content_case_list"] = content_case_list
+                self.updatedisplay("完成获取每个用例的详细信息-{}!".decode('gbk').format(value_config["name"]))
+                self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+                print("test")
 
         self.updatedisplay("完成获取此阶段配置的用例信息!".decode('gbk'))
         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         print("END")
         self.button_go.Enable()
-
 
 
 if __name__ == '__main__':
