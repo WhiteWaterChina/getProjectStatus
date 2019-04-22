@@ -48,6 +48,35 @@ def get_next(get_data, id_sub, headers_sub, url_sub):
     return data_return_dict
 
 
+def get_next_detail(get_data, id_sub, headers_sub, url_sub):
+    payload_next_sub = "id={}".format(id_sub)
+    get_page = get_data.post(url_sub, headers=headers_sub, data=payload_next_sub)
+    data_page = json.loads(get_page.text)
+    # print("Get detail info for id:%s with return code %s" % (id, get_page.status_code))
+    data_return_dict = {}
+    if len(data_page) == 0:
+        return None
+    else:
+        for item_data in data_page:
+            id_data = item_data["id"]
+            text_data = item_data["text"]
+            if "attributes" not in item_data or "testCaseNumber" not in item_data["attributes"]:
+                casenumber_data = "None"
+            else:
+                casenumber_data = item_data["attributes"]["testCaseNumber"]
+            data_return_dict["{}".format(id_data)] = {}
+            data_return_dict["{}".format(id_data)]["id"] = id_data
+            if len(text_data.split(";")) == 1:
+                data_return_dict["{}".format(id_data)]["name"] = text_data
+            else:
+                data_return_dict["{}".format(id_data)]["name"] = text_data.split(";")[1]
+            data_return_dict["{}".format(id_data)]["casenumber"] = casenumber_data
+            data_return_dict["{}".format(id_data)]["data"] = {}
+            data_return_dict["{}".format(id_data)]["parentid"] = id_sub
+
+    return data_return_dict
+
+
 def add_item_to_dict(value_return, parent_id, dict_sub):
     dict_value_sub = dict_sub
     for key_dict, value_dict in dict_value_sub.items():
@@ -66,7 +95,7 @@ def add_level(get_data, headers_projecttree, url_projecttree, data_dict, data_de
     ids_testcase_list_temp = []
     for item_run in ids_next_run:
         parent_id = item_run
-        data_return = get_next(get_data, item_run, headers_projecttree, url_projecttree)
+        data_return = get_next_detail(get_data, item_run, headers_projecttree, url_projecttree)
         if data_return is None:
             pass
         else:
@@ -497,7 +526,7 @@ class GetProjectStatus(wx.Frame):
     def get_phase(self, event):
         self.updatedisplay("开始获取项目阶段".decode('gbk'))
         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-
+        self.listbox_phase.Clear()
         # 获取图形界面上输入的信息
         # 内网还是外网
         places = self.listbox_places.GetStringSelection()
@@ -701,6 +730,7 @@ class GetProjectStatus(wx.Frame):
                             for item_projectname in content_projecttree:
                                 if item_projectname["text"] == project_selected:
                                     id_project_selected = item_projectname["id"]
+                                    project_name = item_projectname["text"]
                             # 找到选中的项目选中的阶段
                             # 获取所有阶段
                             payload_project_selected = "id={}".format(id_project_selected)
@@ -710,6 +740,7 @@ class GetProjectStatus(wx.Frame):
                             for item_phase in content_project_phase:
                                 if item_phase["text"] == phase_selected:
                                     id_phase = item_phase["id"]
+                                    phase_name = item_phase["text"]
                             # 获取阶段下所有CFG的名称和ID
                             payload_config = "id={}".format(id_phase)
                             content_config_temp = get_data.post(url_projecttree, data=payload_config,
@@ -736,7 +767,7 @@ class GetProjectStatus(wx.Frame):
                                              '用例备注'.decode('gbk'), '测试步骤'.decode('gbk'), '预期结果'.decode('gbk'),
                                              '测试结果状态'.decode('gbk')]
                                 timestamp = time.strftime('%Y%m%d', time.localtime())
-                                WorkBook = xlsxwriter.Workbook("配置下异常用例信息获取结果-{}.xlsx".decode('gbk').format(timestamp))
+                                WorkBook = xlsxwriter.Workbook("{}项目{}阶段配置下异常用例信息获取结果-{}.xlsx".decode('gbk').format(project_name, phase_name, timestamp))
                                 formatOne = WorkBook.add_format()
                                 formatOne.set_border(1)
                                 for item_config_1 in content_config:
@@ -744,8 +775,8 @@ class GetProjectStatus(wx.Frame):
                                     name_config = item_config_1["text"]
                                     data_dict["{}".format(id_config)] = {}  # 每个CFG一个dict，后面每个dict写一个sheet页
                                     data_dict["{}".format(id_config)]["id"] = id_config  # dict中保存CFG的id
-                                    data_dict["{}".format(id_config)]["name"] = name_config  # dict中保存CFG的名称
                                     data_dict["{}".format(id_config)]["data"] = {}  # dict中data保存往下层级的信息
+                                    data_dict["{}".format(id_config)]["name"] = name_config  # dict中保存CFG的名称
 
                                 for item_config, value_config in data_dict.items():
                                     # 创建以CFG名称命名的sheet页面
