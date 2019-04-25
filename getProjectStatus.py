@@ -19,14 +19,13 @@ import json
 
 num_year = "2019"
 ver = "1.0"
-address_web_dict = {u"内网": "100.2.39.222:8080", u"外网": "172.31.2.106:8082"}
+address_web_dict = {u"内网": "100.2.39.222", u"外网": "172.31.2.125"}
 
 
 def get_next(get_data, id_sub, headers_sub, url_sub):
     payload_next_sub = "id={}".format(id_sub)
     get_page = get_data.post(url_sub, headers=headers_sub, data=payload_next_sub)
     data_page = json.loads(get_page.text)
-    # print("Get detail info for id:%s with return code %s" % (id, get_page.status_code))
     data_return_dict = {}
     if len(data_page) == 0:
         return None
@@ -52,7 +51,6 @@ def get_next_detail(get_data, id_sub, headers_sub, url_sub):
     payload_next_sub = "id={}".format(id_sub)
     get_page = get_data.post(url_sub, headers=headers_sub, data=payload_next_sub)
     data_page = json.loads(get_page.text)
-    # print("Get detail info for id:%s with return code %s" % (id, get_page.status_code))
     data_return_dict = {}
     if len(data_page) == 0:
         return None
@@ -109,12 +107,11 @@ def add_level(get_data, headers_projecttree, url_projecttree, data_dict, data_de
                     ids_next_run_list_temp.append(id_return)
                     data_dict_return = add_item_to_dict(value_return, parent_id, data_dict)
                     data_dict = data_dict_return
-                    print(id_return)
+                    # print(id_return)
     return ids_next_run_list_temp, ids_testcase_list_temp, data_dict, data_detail_dict
 
 
 def get_detail(get_data, id_testcase_all, flag_status_list, address_web):
-    print(id_testcase_all)
     get_data_sub = get_data
     url_testcase = "http://{}/iauto_acp/itmsTestCaseN.do/projectConfigTestCaseInfo.view".format(address_web)
     headers_detail = {
@@ -122,8 +119,6 @@ def get_detail(get_data, id_testcase_all, flag_status_list, address_web):
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'zh-CN,zh;q=0.9',
         'Connection': 'keep-alive',
-        'Content-Length': '4',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Host': '{}'.format(address_web),
         'Origin': 'http://{}'.format(address_web),
         'Referer': 'http://{}/iauto_acp/itmsTestCase.do/testAdmin.view'.format(address_web),
@@ -134,6 +129,8 @@ def get_detail(get_data, id_testcase_all, flag_status_list, address_web):
     id_testcase = id_testcase_all.split(":")[2]
     querystring_detail = {"projectId": "{}".format(project_id), "configTestCaseId": "{}".format(id_testcase)}
     page_testcase_temp = get_data_sub.get(url_testcase, headers=headers_detail, params=querystring_detail)
+    print(id_testcase_all)
+    print(page_testcase_temp.status_code)
     page_testcase = BeautifulSoup(page_testcase_temp.text, "html.parser")
     # bug ID
     bug_id = page_testcase.find("td", text="Bug Id:").parent.find("a").get_text()
@@ -156,8 +153,6 @@ def get_detail(get_data, id_testcase_all, flag_status_list, address_web):
                 expect_list.append(item_step["testExpect"])
                 content_list.append(item_step["remark"])
 
-    # print(page_testcase)
-    # print("zanting")
     get_data_sub.close()
     return id_testcase_all, bug_id, bug_content, content_bak, status_list, step_list, expect_list, content_list
 
@@ -714,7 +709,7 @@ class GetProjectStatus(wx.Frame):
                                 'Accept-Encoding': 'gzip, deflate',
                                 'Accept-Language': 'zh-CN,zh;q=0.9',
                                 'Connection': 'keep-alive',
-                                'Content-Length': '4',
+                                'Content-Length': '37',
                                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                                 'Host': '{}'.format(address_web),
                                 'Origin': 'http://{}'.format(address_web),
