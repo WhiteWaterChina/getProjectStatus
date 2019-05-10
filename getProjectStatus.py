@@ -415,16 +415,20 @@ class GetProjectStatus(wx.Frame):
         self.button_go.Bind(wx.EVT_BUTTON, self.onbutton)
         self.button_exit.Bind(wx.EVT_BUTTON, self.close)
 
-        self._thread = Thread(target=self.run, args=())
-        self._thread.daemon = True
+        # self._thread = Thread(target=self.run, args=())
+        # self._thread.daemon = True
 
     def close(self, event):
         self.Close()
 
+    def newthread(self):
+        Thread(target=self.run_all).start()
+
     def onbutton(self, event):
-        self._thread.start()
-        self.started = True
-        self.button_go = event.GetEventObject()
+        # self._thread.start()
+        # self.started = True
+        # self.button_go = event.GetEventObject()
+        self.newthread()
         self.button_go.Disable()
 
     def updatedisplay(self, msg):
@@ -620,7 +624,7 @@ class GetProjectStatus(wx.Frame):
                                                            wx.OK | wx.ICON_INFORMATION | wx.STAY_ON_TOP)
                     diag_finish_project.ShowModal()
 
-    def run(self):
+    def run_all(self):
         self.updatedisplay("开始获取项目名称")
         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 
