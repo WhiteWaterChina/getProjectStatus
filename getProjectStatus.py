@@ -137,13 +137,14 @@ def get_detail(get_data, id_testcase_all, flag_status_list, address_web):
     # BUG内容
     bug_content = page_testcase.find("td", text="Bug Content:").parent.find("a").get_text()
     # 备注
-    content_bak = page_testcase.find("td", text="备注(content):".decode('gbk')).parent.find("a").get_text()
+    content_bak = page_testcase.find("td", text="备注(content):").parent.find("a").get_text()
     produce_temp = re.search(r'var procedureList = (\[\{.*?\}\]);', page_testcase_temp.text).groups()[0]
     produce = json.loads(produce_temp)
     step_list = []
     expect_list = []
     status_list = []
     content_list = []
+    remark_step_list = []
     if len(produce) != 0:
         for item_step in produce:
             status_step = item_step["result"]
@@ -429,15 +430,15 @@ class GetProjectStatus(wx.Frame):
     def updatedisplay(self, msg):
         t = msg
         if isinstance(t, int):
-            self.textctrl_display.AppendText("完成".decode('gbk') + unicode(t) + "%")
+            self.textctrl_display.AppendText("完成{}%".format(t))
         elif t == "Finished":
             self.button_go.Enable()
         else:
-            self.textctrl_display.AppendText("%s".decode('gbk') % t)
+            self.textctrl_display.AppendText("%s" % t)
         self.textctrl_display.AppendText(os.linesep)
 
     def get_projectname(self, event):
-        self.updatedisplay("开始获取项目名称".decode('gbk'))
+        self.updatedisplay("开始获取项目名称")
         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 
         # 获取图形界面上输入的信息
@@ -450,16 +451,16 @@ class GetProjectStatus(wx.Frame):
 
         # 登录
         if len(places) == 0:
-            self.updatedisplay("没有选择内网还是外网！".decode('gbk'))
+            self.updatedisplay("没有选择内网还是外网！")
             self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-            diag_error = wx.MessageDialog(None, "没有选择内网还是外网！".decode('gbk'), '错误'.decode('gbk'),
+            diag_error = wx.MessageDialog(None, "没有选择内网还是外网！", '错误',
                                           wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
             diag_error.ShowModal()
         else:
             if len(username) == 0 or len(password) == 0:
-                self.updatedisplay("没有输入用户名或者密码！".decode('gbk'))
+                self.updatedisplay("没有输入用户名或者密码！")
                 self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                diag_error = wx.MessageDialog(None, "没有输入用户名或者密码！".decode('gbk'), '错误'.decode('gbk'),
+                diag_error = wx.MessageDialog(None, "没有输入用户名或者密码！", '错误',
                                               wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                 diag_error.ShowModal()
             else:
@@ -504,22 +505,22 @@ class GetProjectStatus(wx.Frame):
                 content_projecttree = json.loads(content_projecttree_temp)
                 # project_name_show = []
                 if len(content_projecttree) == 0:
-                    self.updatedisplay("没有获取到任何项目信息！".decode('gbk'))
+                    self.updatedisplay("没有获取到任何项目信息！")
                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                    diag_error_no_project = wx.MessageDialog(None, "没有获取到任何项目信息！".decode('gbk'), '错误'.decode('gbk'),
+                    diag_error_no_project = wx.MessageDialog(None, "没有获取到任何项目信息！", '错误',
                                                              wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                     diag_error_no_project.ShowModal()
                 else:
                     for item_projectname in content_projecttree:
                         self.listbox_projectname.Append(item_projectname["text"])
-                self.updatedisplay("结束获取项目名称".decode('gbk'))
+                self.updatedisplay("结束获取项目名称")
                 self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                diag_finish_project = wx.MessageDialog(None, "获取项目信息完成！".decode('gbk'), '提示'.decode('gbk'),
+                diag_finish_project = wx.MessageDialog(None, "获取项目信息完成！", '提示',
                                                        wx.OK | wx.ICON_INFORMATION | wx.STAY_ON_TOP)
                 diag_finish_project.ShowModal()
 
     def get_phase(self, event):
-        self.updatedisplay("开始获取项目阶段".decode('gbk'))
+        self.updatedisplay("开始获取项目阶段")
         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         self.listbox_phase.Clear()
         # 获取图形界面上输入的信息
@@ -534,23 +535,23 @@ class GetProjectStatus(wx.Frame):
 
         # 登录
         if len(places) == 0:
-            self.updatedisplay("没有选择内网还是外网！".decode('gbk'))
+            self.updatedisplay("没有选择内网还是外网！")
             self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-            diag_error = wx.MessageDialog(None, "没有选择内网还是外网！".decode('gbk'), '错误'.decode('gbk'),
+            diag_error = wx.MessageDialog(None, "没有选择内网还是外网！", '错误',
                                           wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
             diag_error.ShowModal()
         else:
             if len(username) == 0 or len(password) == 0:
-                self.updatedisplay("没有输入用户名或者密码！".decode('gbk'))
+                self.updatedisplay("没有输入用户名或者密码！")
                 self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                diag_error = wx.MessageDialog(None, "没有输入用户名或者密码！".decode('gbk'), '错误'.decode('gbk'),
+                diag_error = wx.MessageDialog(None, "没有输入用户名或者密码！", '错误',
                                               wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                 diag_error.ShowModal()
             else:
                 if len(project_selected) == 0:
-                    self.updatedisplay("没有选择项目名称！".decode('gbk'))
+                    self.updatedisplay("没有选择项目名称！")
                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                    diag_error = wx.MessageDialog(None, "没有选择项目名称！".decode('gbk'), '错误'.decode('gbk'),
+                    diag_error = wx.MessageDialog(None, "没有选择项目名称！", '错误',
                                                   wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                     diag_error.ShowModal()
                 else:
@@ -604,23 +605,23 @@ class GetProjectStatus(wx.Frame):
                     content_project_phase = json.loads(content_project_phase_temp)
                     # show phase
                     if len(content_project_phase) == 0:
-                        self.updatedisplay("没有获取到任何阶段信息！".decode('gbk'))
+                        self.updatedisplay("没有获取到任何阶段信息！")
                         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                        diag_error_no_project = wx.MessageDialog(None, "没有获取到任何阶段信息！".decode('gbk'), '错误'.decode('gbk'),
+                        diag_error_no_project = wx.MessageDialog(None, "没有获取到任何阶段信息！", '错误',
                                                                  wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                         diag_error_no_project.ShowModal()
                     else:
                         for item_phase in content_project_phase:
-                            if item_phase["text"] != "项目用例库".decode('gbk'):
+                            if item_phase["text"] != "项目用例库":
                                 self.listbox_phase.Append(item_phase["text"])
-                    self.updatedisplay("结束获取项目阶段！".decode('gbk'))
+                    self.updatedisplay("结束获取项目阶段！")
                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                    diag_finish_project = wx.MessageDialog(None, "获取项目阶段！完成！".decode('gbk'), '提示'.decode('gbk'),
+                    diag_finish_project = wx.MessageDialog(None, "获取项目阶段！完成！", '提示',
                                                            wx.OK | wx.ICON_INFORMATION | wx.STAY_ON_TOP)
                     diag_finish_project.ShowModal()
 
     def run(self):
-        self.updatedisplay("开始获取项目名称".decode('gbk'))
+        self.updatedisplay("开始获取项目名称")
         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 
         # 获取图形界面上输入的信息
@@ -641,42 +642,42 @@ class GetProjectStatus(wx.Frame):
             flag_status_list.append(self.listbox_status.GetString(item))
         # 登录
         if len(places) == 0:
-            self.updatedisplay("没有选择内网还是外网！请退出程序，然后重新打开！".decode('gbk'))
+            self.updatedisplay("没有选择内网还是外网！请退出程序，然后重新打开！")
             self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-            diag_error = wx.MessageDialog(None, "没有选择内网还是外网！请退出程序，然后重新打开！".decode('gbk'), '错误'.decode('gbk'),
+            diag_error = wx.MessageDialog(None, "没有选择内网还是外网！请退出程序，然后重新打开！", '错误',
                                           wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
             diag_error.ShowModal()
             self.button_go.Enable()
         else:
             if len(username) == 0 or len(password) == 0:
-                self.updatedisplay("没有输入用户名或者密码！请退出程序，然后重新打开！".decode('gbk'))
+                self.updatedisplay("没有输入用户名或者密码！请退出程序，然后重新打开！")
                 self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                diag_error = wx.MessageDialog(None, "没有输入用户名或者密码！请退出程序，然后重新打开！".decode('gbk'), '错误'.decode('gbk'),
+                diag_error = wx.MessageDialog(None, "没有输入用户名或者密码！请退出程序，然后重新打开！", '错误',
                                               wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                 diag_error.ShowModal()
                 self.button_go.Enable()
             else:
                 if len(project_selected) == 0:
-                    self.updatedisplay("没有选择项目名称！请退出程序，然后重新打开！".decode('gbk'))
+                    self.updatedisplay("没有选择项目名称！请退出程序，然后重新打开！")
                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                    diag_error = wx.MessageDialog(None, "没有选择项目名称！请退出程序，然后重新打开！".decode('gbk'), '错误'.decode('gbk'),
+                    diag_error = wx.MessageDialog(None, "没有选择项目名称！请退出程序，然后重新打开！", '错误',
                                                   wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                     diag_error.ShowModal()
                     self.button_go.Enable()
                 else:
                     if len(phase_selected) == 0:
-                        self.updatedisplay("没有选择项目阶段！请退出程序，然后重新打开！".decode('gbk'))
+                        self.updatedisplay("没有选择项目阶段！请退出程序，然后重新打开！")
                         self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                        diag_error = wx.MessageDialog(None, "没有选择项目阶段！请退出程序，然后重新打开！".decode('gbk'), '错误'.decode('gbk'),
+                        diag_error = wx.MessageDialog(None, "没有选择项目阶段！请退出程序，然后重新打开！", '错误',
                                                       wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                         diag_error.ShowModal()
                         self.button_go.Enable()
                     else:
                         if len(flag_status_list) == 0:
-                            self.updatedisplay("没有选择要获取的异常状态！请退出程序，然后重新打开！".decode('gbk'))
+                            self.updatedisplay("没有选择要获取的异常状态！请退出程序，然后重新打开！")
                             self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                            diag_error = wx.MessageDialog(None, "没有选择要获取的异常状态！请退出程序，然后重新打开！".decode('gbk'),
-                                                          '错误'.decode('gbk'),
+                            diag_error = wx.MessageDialog(None, "没有选择要获取的异常状态！请退出程序，然后重新打开！",
+                                                          '错误',
                                                           wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                             diag_error.ShowModal()
                             self.button_go.Enable()
@@ -744,25 +745,25 @@ class GetProjectStatus(wx.Frame):
                             data_dict = {}
 
                             if len(content_config) == 0:
-                                self.updatedisplay("此阶段下无配置!".decode('gbk'))
+                                self.updatedisplay("此阶段下无配置!")
                                 self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                                diag_error_no_project = wx.MessageDialog(None, "此阶段下无配置！".decode('gbk'),
-                                                                         '错误'.decode('gbk'),
+                                diag_error_no_project = wx.MessageDialog(None, "此阶段下无配置！",
+                                                                         '错误',
                                                                          wx.OK | wx.ICON_ERROR | wx.STAY_ON_TOP)
                                 diag_error_no_project.ShowModal()
                                 self.button_go.Enable()
                             else:
-                                self.updatedisplay("开始获取此阶段配置的用例信息!".decode('gbk'))
+                                self.updatedisplay("开始获取此阶段配置的用例信息!")
                                 self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                                 # 创建保存输出结果的excel表格
-                                TitleItem = ['层级1'.decode('gbk'), '层级2'.decode('gbk'), '层级3'.decode('gbk'),
-                                             '层级4'.decode('gbk'),
-                                             '用例名称'.decode('gbk'), '用例编号'.decode('gbk'), '用例BUG ID'.decode('gbk'),
-                                             '用例BUG描述'.decode('gbk'),
-                                             '用例备注'.decode('gbk'), '测试步骤'.decode('gbk'), '预期结果'.decode('gbk'),
-                                             '测试结果状态'.decode('gbk')]
+                                TitleItem = ['层级1', '层级2', '层级3',
+                                             '层级4',
+                                             '用例名称', '用例编号', '用例BUG ID',
+                                             '用例BUG描述',
+                                             '用例备注', '测试步骤', '预期结果',
+                                             '测试结果状态','测试步骤备注']
                                 timestamp = time.strftime('%Y%m%d', time.localtime())
-                                WorkBook = xlsxwriter.Workbook("{}项目{}阶段配置下异常用例信息获取结果-{}.xlsx".decode('gbk').format(project_name, phase_name, timestamp))
+                                WorkBook = xlsxwriter.Workbook("{}项目{}阶段配置下异常用例信息获取结果-{}.xlsx".format(project_name, phase_name, timestamp))
                                 formatOne = WorkBook.add_format()
                                 formatOne.set_border(1)
                                 for item_config_1 in content_config:
@@ -775,7 +776,7 @@ class GetProjectStatus(wx.Frame):
 
                                 for item_config, value_config in data_dict.items():
                                     # 创建以CFG名称命名的sheet页面
-                                    Sheet = WorkBook.add_worksheet('{}'.decode('gbk').format(value_config["name"]))
+                                    Sheet = WorkBook.add_worksheet('{}'.format(value_config["name"]))
                                     # 在sheet中写入标题
                                     for i in range(0, len(TitleItem)):
                                         Sheet.write(0, i, TitleItem[i], formatOne)
@@ -785,7 +786,7 @@ class GetProjectStatus(wx.Frame):
                                     Sheet.set_column('F:F', 25)
                                     Sheet.set_column('G:I', 20)
                                     Sheet.set_column('J:K', 30)
-                                    Sheet.set_column('L:L', 13)
+                                    Sheet.set_column('L:M', 13)
 
                                     data_detail_dict = {}
                                     parent_id_1 = item_config
@@ -793,7 +794,7 @@ class GetProjectStatus(wx.Frame):
                                     data_return_1 = get_next(get_data, item_config, headers_projecttree,
                                                              url_projecttree)
                                     #     return data_return_dict
-                                    self.updatedisplay("开始获取配置下的层级关系-{}!".decode('gbk').format(value_config["name"]))
+                                    self.updatedisplay("开始获取配置下的层级关系-{}!".format(value_config["name"]))
                                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                                     if data_return_1 is None:
                                         pass
@@ -821,10 +822,10 @@ class GetProjectStatus(wx.Frame):
                                             data_dict = return_add_level[2]
                                             data_detail_dict = return_add_level[3]
 
-                                    self.updatedisplay("完成获取配置下的层级关系-{}!".decode('gbk').format(value_config["name"]))
+                                    self.updatedisplay("完成获取配置下的层级关系-{}!".format(value_config["name"]))
                                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                                     # 获取每个用例的详细信息
-                                    self.updatedisplay("开始获取每个用例的详细信息-{}!".decode('gbk').format(value_config["name"]))
+                                    self.updatedisplay("开始获取每个用例的详细信息-{}!".format(value_config["name"]))
                                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                                     temp_detail = []
                                     pool_detail = Pool(multiprocessing.cpu_count())
@@ -860,7 +861,7 @@ class GetProjectStatus(wx.Frame):
                                             "content_case_list"] = content_case_list
                                         data_detail_dict["{}".format(id_testcase)]["data"]["data"] = "data"
 
-                                    self.updatedisplay("完成获取每个用例的详细信息-{}!".decode('gbk').format(value_config["name"]))
+                                    self.updatedisplay("完成获取每个用例的详细信息-{}!".format(value_config["name"]))
                                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                                     # 去除获取到的用例中，没有出现异常的
                                     data_detail_dict_write = {}
@@ -869,7 +870,7 @@ class GetProjectStatus(wx.Frame):
                                         if len(status_case) != 0:
                                             data_detail_dict_write["{}".format(item_case)] = value_case
 
-                                    self.updatedisplay("开始将{}信息输出到excel中!".decode('gbk').format(value_config["name"]))
+                                    self.updatedisplay("开始将{}信息输出到excel中!".format(value_config["name"]))
                                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                                     list_to_write = []
                                     for item_case_write, value_case_write in data_detail_dict_write.items():
@@ -954,7 +955,7 @@ class GetProjectStatus(wx.Frame):
                                             Sheet.merge_range(baseline_to_write + index_write, 8,
                                                               baseline_to_write + index_write + len_to_merge, 8,
                                                               item_write[4]["data"]["content_bak"], formatOne)
-                                        # 写入测试步骤、预期结果、测试结果状态
+                                        # 写入测试步骤、预期结果、测试结果状态、测试步骤备注
                                         for index_status, item_status in enumerate(
                                                 item_write[4]["data"]["status_case_list"]):
                                             # baseline_to_write = baseline_to_write + index_status
@@ -967,10 +968,13 @@ class GetProjectStatus(wx.Frame):
                                             Sheet.write(baseline_to_write + index_write + index_status, 11,
                                                         item_write[4]["data"]["status_case_list"][index_status],
                                                         formatOne)
+                                            Sheet.write(baseline_to_write + index_write + index_status, 12,
+                                                        item_write[4]["data"]["content_case_list"][index_status],
+                                                        formatOne)
                                         baseline_to_write = baseline_to_write + len_to_merge
-                                    self.updatedisplay("结束将{}的信息输出到excel中!".decode('gbk').format(value_config["name"]))
+                                    self.updatedisplay("结束将{}的信息输出到excel中!".format(value_config["name"]))
                                     self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                                self.updatedisplay("完成获取此阶段配置的用例信息,请点击EXIT退出程序!".decode('gbk'))
+                                self.updatedisplay("完成获取此阶段配置的用例信息,请点击EXIT退出程序!")
                                 self.updatedisplay(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
                                 WorkBook.close()
                             print("END ALL!")
